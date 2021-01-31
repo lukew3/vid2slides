@@ -3,7 +3,8 @@
 A tool for extracting a slideshow from a video presentation. 
 
 ## Installation
-Requires ffmpeg
+Requires ffmpeg.
+
 Package can be installed via pip: `pip install vid2slides`
 
 ## Usage

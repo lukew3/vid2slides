@@ -1,7 +1,6 @@
 import click
 import os
 import shutil
-from PIL import Image, ImageChops, ImageStat
 from .v2s import extract_slides, write_to_pdf
 
 """

@@ -9,7 +9,7 @@ setup(
     author_email='lukew25073@gmail.com',
     license='MIT',
     packages=find_packages(),
-    install_requires=['click', 'opencv-python'],
+    install_requires=['click', 'Pillow'],
     entry_points={
         'console_scripts': ['vid2slides=vid2slides.cli:cli'],
     },

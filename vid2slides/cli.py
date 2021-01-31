@@ -1,45 +1,68 @@
 import click
-import cv2
-from skimage.metrics import structural_similarity
+import os
+from PIL import Image, ImageChops, ImageStat
 
 """
 How it works:
-Detect and mask webcam
-Extract slides as jpg from video by detecting when a frame is different than the last
-Write jpg to ppt or pdf file
-    pdf default, ppt or open source version of ppt if specified
+1. ffmpeg writes keyframes to frames folder
+2. checks if adjacent keyframes are the same
+3. write to pdf
 """
 
 @click.command()
-def cli():
+@click.argument('filename')
+def cli(filename):
     """ Extracts a slideshow from a video presentation """
-    extract_slides('test.webm')
-    print('slides extracted')
+    extract_slides(filename)
 
 
 def extract_slides(video_path):
-    vidcap = cv2.VideoCapture(video_path)
-    success,previous_image = vidcap.read()
-    slide_num = 0
-    while success:
-        # Saves previous slide if slide changes
-        success,current_image = vidcap.read()
-        if check_different(previous_image, current_image): 
-            cv2.imwrite("slide%d.jpg" % slide_num, previous_image)
-            slide_num += 1
-        previous_image = current_image
-    # next line saves the last slide, because it has not been saved yet
-    cv2.imwrite("slide%d.jpg" % slide_num, last_image)
+    # Fill a folder with all of the images
+    width = 1280
+    height = 720
+    cur_dir = os.getcwd()
+    frames_folder = os.path.join(cur_dir, 'frames')
+    if not os.path.exists(frames_folder):
+        os.makedirs(frames_folder)
+    #should I add an else statement here to delete frames folder if it exists?
+    # Is -s WxH necessary?
+    script = f'ffmpeg -i {video_path} -vsync 0 -vf select="eq(pict_type\,PICT_TYPE_I)" -f image2 frames/foo-%03d.jpeg'
+    os.system(script)
+    remove_duplicates(frames_folder)
+    write_to_pdf(frames_folder)
 
 
-def check_different(image1, image2):
-    """ Returns true if the frames are different, false if not """
-    gray_img1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
-    gray_img2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
-    (score, diff) = structural_similarity(gray_img1, gray_img2, full=True)
-    diff = (diff * 255).astype("uint8")
-    print("Structural Similarity Index: {}".format(score))
-    if (score != 1.0):
-        return True
-    else:
-        return False
+def remove_duplicates(frames_folder):
+    """ Goes through each file in the passed folder and removes if difference ratio is less than 2.0"""
+    filename_list = []
+    for filename in os.listdir(frames_folder):
+        filename_list.append(filename)
+    filename_list.sort()
+    last_frame = Image.open(frames_folder + '/' + filename_list[0])
+    duplicates_list = []
+    for i in range(1, len(filename_list)):
+        cur_frame = Image.open(frames_folder + '/' + filename_list[i])
+        diff_img = ImageChops.difference(cur_frame, last_frame)
+        stat = ImageStat.Stat(diff_img)
+        diff_ratio = 100 * (sum(stat.mean) / (len(stat.mean) * 255))
+        # print(filename_list[i] + ": " + str(diff_ratio))
+        # If the images are identical, remove the previous file
+        # 2.0 is what worked for me, might want to tweak this with an option
+        if diff_ratio <= 2.0:
+            duplicates_list.append(frames_folder + '/' + filename_list[i-1])
+        last_frame = cur_frame
+    #remove each image in list
+    for image in duplicates_list:
+        os.remove(image)
+
+
+def write_to_pdf(frames_folder):
+    frames_list = []
+    images = []
+    for filename in os.listdir(frames_folder):
+        frames_list.append(filename)
+    frames_list.sort()
+    for frame in frames_list:
+        images.append(Image.open(frames_folder + '/' + frame).convert("RGB"))
+    images[0].save("out.pdf", save_all=True, append_images=images[1:])
+    print("Output written to out.pdf")

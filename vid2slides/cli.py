@@ -10,6 +10,7 @@ How it works:
 3. write to pdf
 """
 
+
 @click.command()
 @click.argument('filename')
 @click.option('-o', '--output')
@@ -17,11 +18,10 @@ def cli(filename, output):
     """ Extracts a slideshow from a video presentation """
     frames_folder = os.path.join(os.getcwd(), 'frames')
     extract_slides(filename, frames_folder)
-    
-    if output != None:
+
+    if output is not None:
         write_to_pdf(frames_folder, output)
     else:
         write_to_pdf(frames_folder)
-    
-    shutil.rmtree(frames_folder)
 
+    shutil.rmtree(frames_folder)

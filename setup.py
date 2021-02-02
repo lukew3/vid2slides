@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vid2slides',
-    version='0.0.1',
+    version='0.0.2',
     description='Extract a slideshow from a video presentation',
     url='https://github.com/lukew3/vid2slides',
     author='Luke Weiler',

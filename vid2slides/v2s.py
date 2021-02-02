@@ -1,6 +1,16 @@
 import os
 import shutil
 from PIL import Image, ImageChops, ImageStat
+import tempfile
+
+
+def v2s(video_path, output='out.pdf'):
+    tempdir = tempfile.TemporaryDirectory()
+    frames_folder = tempdir.name
+    extract_slides(video_path, frames_folder)
+    write_to_pdf(frames_folder, output)
+    shutil.rmtree(frames_folder)
+    tempdir.cleanup()
 
 
 def extract_slides(video_path, frames_folder):
@@ -8,7 +18,7 @@ def extract_slides(video_path, frames_folder):
     if os.path.exists(frames_folder):
         shutil.rmtree(frames_folder)
     os.makedirs(frames_folder)
-    script = f'ffmpeg -loglevel quiet -i {video_path} -vsync 0 -vf select="eq(pict_type\\,PICT_TYPE_I)" -f image2 frames/foo-%03d.jpeg'
+    script = f'ffmpeg -loglevel quiet -i {video_path} -vsync 0 -vf select="eq(pict_type\\,PICT_TYPE_I)" -f image2 {frames_folder}/foo-%03d.jpeg'
     print("Extracting frames...")
     os.system(script)
     remove_duplicates(frames_folder)
@@ -47,3 +57,11 @@ def write_to_pdf(frames_folder, output="out.pdf"):
         images.append(Image.open(frames_folder + '/' + frame).convert("RGB"))
     images[0].save(output, save_all=True, append_images=images[1:])
     print("Output written to " + output)
+
+
+def cover_webcam():
+    pass
+
+
+def crop_slides():
+    pass

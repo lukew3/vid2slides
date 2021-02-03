@@ -37,10 +37,10 @@ def remove_duplicates(frames_folder):
         cur_frame = Image.open(frames_folder + '/' + filename_list[i])
         diff_img = ImageChops.difference(cur_frame, last_frame)
         stat = ImageStat.Stat(diff_img)
-        diff_ratio = 100 * (sum(stat.mean) / (len(stat.mean) * 255))
+        diff_percent = 100 * (sum(stat.mean) / (len(stat.mean) * 255))
         # print(filename_list[i] + ": " + str(diff_ratio))
         # 2.0 is what worked for me, might want to tweak this with an option
-        if diff_ratio <= 2.0:
+        if diff_percent <= 2.0:
             duplicates_list.append(frames_folder + '/' + filename_list[i - 1])
         last_frame = cur_frame
     for image in duplicates_list:
